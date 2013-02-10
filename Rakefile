@@ -45,11 +45,15 @@ def install_assets (theme)
 end
 
 def install_stylesheets (theme)
+  theme_config = Octopress::Configuration.read_theme_configuration(theme)
+  begin
+    stylesheets_dir = File.join(".themes/#{theme}", theme_config[:theme][:stylesheets_dir])
+  rescue
+    "The #{theme} theme must have a configuration file. This theme isn't compatable with Octopress 3.0 installation. You can probably still install it manually."
+  end
   mkdir_p "assets/stylesheets"
-  if File.directory? ".themes/#{theme}/sass"
-    cp_r ".themes/#{theme}/sass/.", "assets/stylesheets"
-  elsif File.directory? ".themes/#{theme}/assets/stylesheets" 
-    cp_r ".themes/#{theme}/assets/stylesheets/.", "assets/stylesheets"
+  if File.directory? stylesheets_dir
+    cp_r "#{stylesheets_dir}/.", "assets/stylesheets"
   end
 end
 
@@ -72,7 +76,7 @@ end
 desc "Generate jekyll site"
 task :generate, :dev do |t, args|
   dev = args.dev
-  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(source_dir)
+  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(config[:source])
   Octopress::Configuration.write_configs_for_generation
   puts "## Generating Site with Jekyll"
   system "compass compile --css-dir #{config[:source]}/stylesheets"

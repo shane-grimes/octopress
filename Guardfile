@@ -25,7 +25,7 @@ guard :shell do
   # If a template file changes, trigger a Jekyll build
   watch /^#{config[:source]}\/.+\.(md|markdown|textile|html|haml|slim|xml)/ do
     Octopress::Configuration.write_configs_for_generation
-    Thread.new { system 'jekyll' }
+    system 'jekyll'
     Octopress::Configuration.remove_configs_for_generation
   end
 

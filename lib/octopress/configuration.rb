@@ -6,6 +6,10 @@ module Octopress
       File.absolute_path(File.join(File.dirname(__FILE__), '../', '../' '_config', *subdirs))
     end
 
+    def self.theme_config_dir(theme, *subdirs)
+      File.absolute_path(File.join(File.dirname(__FILE__), '../', '../' '.themes', theme, '_config', *subdirs))
+    end
+
     # Static: Reads the configuration of the specified file
     #
     # path - the String path to the configuration file, relative to ./_config
@@ -62,6 +66,20 @@ module Octopress
       configs.to_symbol_keys
     end
 
+    # Static: Reads all the theme's configuration files into one hash
+    #
+    # Returns a Hash of all the configuration files, with each key being a symbol
+    def self.read_theme_configuration(theme)
+      configs = {}
+      Dir.glob(self.theme_config_dir(theme, '**', '*.yml')) do |filename|
+        file_yaml = YAML.load(File.read(filename))
+        unless file_yaml.nil?
+          configs = file_yaml.deep_merge(configs)
+        end
+      end
+      
+      configs.to_symbol_keys
+    end
     # Static: Writes configuration files necessary for generation of the Jekyll site
     #
     # Returns a Hash of the items which were written to the Jekyll configuration file

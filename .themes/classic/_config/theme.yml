@@ -5,12 +5,10 @@
 
 theme:
   name: classic
-  # Assets directory
-  assets: assets
-  # path to stylesheets directory
-  stylesheets: stylesheets
-  # path to javascripts directory
-  javascripts: javascripts
+  # path to theme stylesheets directory
+  stylesheets_dir: assets/stylesheets
+  # path to theme javascripts directory
+  javascripts_dir: assets/javascripts
 
 
 url: http://yoursite.com
