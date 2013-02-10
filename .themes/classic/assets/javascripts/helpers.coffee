@@ -52,7 +52,7 @@ Helpers =
 
   # Sort an array of objects on a given key
 
-  sortByKey = (list, key, order='asc') ->
+  sortByKey: (list, key, order='asc') ->
     list = list.sort (a,b)->
       if a[key] > b[key] then 1 else if b[key] > a[key] then -1 else 0
     if order is 'desc' then list.reverse() else list
