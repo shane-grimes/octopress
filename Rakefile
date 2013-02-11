@@ -7,6 +7,7 @@ require 'time'
 require 'tzinfo'
 require 'yaml'
 require 'octopress'
+require 'colors'
 
 ### Configuring Octopress:
 ###   Under _config/ you will find:
@@ -18,6 +19,7 @@ require 'octopress'
 
 config = Octopress::Configuration.read_configuration
 
+# TODO: Check directories based on theme configs
 desc "Initial setup for Octopress: copies the default theme into the path of Jekyll's generator. Rake install defaults to rake install[classic] to install a different theme run rake install[some_theme_name]"
 task :install, :theme do |t, args|
   if File.directory?('source') || File.directory?('assets')
@@ -36,6 +38,24 @@ def install_configs (theme)
   mkdir_p "_config"
   if File.directory? ".themes/#{theme}/_config"
     cp_r ".themes/#{theme}/_config/.", "_config/defaults", :remove_destination=>true
+    user_config_site = <<-EOF
+---
+# --------------------------- #
+#      User Configuration     #
+# --------------------------- #
+
+EOF
+    File.open('_config/site.yml', 'w') { |f| f.write user_config_site }
+
+    user_config_deploy = <<-EOF
+---
+# -------------------------- #
+#      Deployment Config     #
+# -------------------------- #
+
+deploy_method: rsync
+EOF
+    File.open('_config/deploy.yml', 'w') { |f| f.write user_config_deploy }
   end
 end
 
@@ -49,7 +69,7 @@ def install_stylesheets (theme)
   begin
     stylesheets_dir = File.join(".themes/#{theme}", theme_config[:theme][:stylesheets_dir])
   rescue
-    "The #{theme} theme must have a configuration file. This theme isn't compatable with Octopress 3.0 installation. You can probably still install it manually."
+    "The #{theme} theme must have a configuration file. This theme isn't compatable with Octopress 3.0 installation. You can probably still install it manually.".yellow
   end
   mkdir_p "assets/stylesheets"
   if File.directory? stylesheets_dir
@@ -58,9 +78,15 @@ def install_stylesheets (theme)
 end
 
 def install_javascripts (theme)
-  if File.directory? ".themes/#{theme}/assets/javascripts" 
-    mkdir_p "assets/javascripts"
-    cp_r ".themes/#{theme}/assets/javascripts/.", "assets/javascripts", :remove_destination=>true
+  theme_config = Octopress::Configuration.read_theme_configuration(theme)
+  begin
+    javascripts_dir = File.join(".themes/#{theme}", theme_config[:theme][:javascripts_dir])
+  rescue
+    "The #{theme} theme must have a configuration file. This theme isn't compatable with Octopress 3.0 installation. You can probably still install it manually.".yellow
+  end
+  mkdir_p "assets/javascripts"
+  if File.directory? javascripts_dir
+    cp_r "#{javascripts_dir}/.", "assets/javascripts"
   end
 end
 
@@ -73,19 +99,21 @@ end
 # Working with Jekyll #
 #######################
 
+# TODO: first run checks
+# - Check to see if site has been installed first rescue properly
 desc "Generate jekyll site"
-task :generate, :dev do |t, args|
-  dev = args.dev
-  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(config[:source])
+task :generate do
   Octopress::Configuration.write_configs_for_generation
   puts "## Generating Site with Jekyll"
   system "compass compile --css-dir #{config[:source]}/stylesheets"
-  system "jekyll --no-server --no-auto #{'--no-future' if dev.nil?}"
-  unpublished = get_unpublished(Dir.glob("#{source_dir}/#{posts_dir}/*.*"), {production: dev.nil?, message: "\nThese posts were not generated:"})
+  system "jekyll --no-server --no-auto #{'--no-future' if Octopress.env == 'production'}"
+  unpublished = get_unpublished(Dir.glob("#{config[:source]}/#{config[:posts_dir]}/*.*"), {env: Octopress.env, message: "\nThese posts were not generated:"})
   puts unpublished unless unpublished.empty?
   Octopress::Configuration.remove_configs_for_generation
 end
 
+# TODO: first run checks
+# - Check to see if site has been installed first rescue properly
 # usage rake generate_only[my-post]
 desc "Generate only the specified post (much faster)"
 task :generate_only, :filename do |t, args|
@@ -101,42 +129,33 @@ task :generate_only, :filename do |t, args|
   Rake::Task["integrate"].execute
 end
 
+# TODO: first run checks
+# - Check to see if site has been installed first rescue properly
 desc "Watch the site and regenerate when it changes"
-task :watch, :dev do |t, args|
-  dev = args.dev
-  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(source_dir)
-  Octopress::Configuration.write_configs_for_generation
-  puts "Starting to watch source with Jekyll and Compass."
-  system "compass compile --css-dir #{config[:source]}/stylesheets"
-  Rake::Task['minify_and_combine'].execute
-  jekyllPid = Process.spawn("jekyll --auto #{'--no-future' if dev.nil?}")
-  compassPid = Process.spawn("compass watch")
+task :watch do
+  guardPid = Process.spawn("guard")
   trap("INT") {
-    [jekyllPid, compassPid].each { |pid| Process.kill(9, pid) rescue Errno::ESRCH }
-    Octopress::Configuration.remove_configs_for_generation
+    Process.kill(9, guardPid) rescue Errno::ESRCH
     exit 0
   }
-  [jekyllPid, compassPid].each { |pid| Process.wait(pid) }
+  Process.wait guardPid
 end
 
+# TODO: Improve exit and first run checks
+# - Preview doesn't exit well since Guard has a sane exit, but rack expects ctrl+c.
+# - Check to see if site has been installed first rescue properly
 desc "preview the site in a web browser."
-task :preview, :dev do |t, args|
-  dev = args.dev
-  raise "### You haven't set anything up yet. First run `rake install` to set up an Octopress theme." unless File.directory?(source_dir)
-  Octopress::Configuration.write_configs_for_generation
-  puts "Starting to watch source with Jekyll and Compass. Starting Rack, serving to http://#{config[:server_host]}:#{config[:server_port]}"
-  system "compass compile --css-dir #{config[:source]}/stylesheets"
-  jekyllPid = Process.spawn("jekyll --auto #{'--no-future' if dev.nil?}")
-  compassPid = Process.spawn("compass watch")
+task :preview do
+  guardPid = Process.spawn("guard")
+  puts "Starting Rack, serving to http://#{config[:server_host]}:#{config[:server_port]}"
   rackupPid = Process.spawn("rackup --host #{config[:server_host]} --port #{config[:server_port]}")
 
   trap("INT") {
-    [jekyllPid, compassPid, rackupPid].each { |pid| Process.kill(9, pid) rescue Errno::ESRCH }
-    Octopress::Configuration.remove_configs_for_generation
+    [guardPid, rackupPid].each { |pid| Process.kill(9, pid) rescue Errno::ESRCH }
     exit 0
   }
 
-  [jekyllPid, compassPid, rackupPid].each { |pid| Process.wait(pid) }
+  [guardPid, rackupPid].each { |pid| Process.wait(pid) }
 end
 
 # usage rake new_post[my-new-post] or rake new_post['my new post'] or rake new_post (defaults to "new-post")
@@ -497,7 +516,7 @@ def get_unpublished(posts, options={})
     file = File.read(post)
     data = YAML.load file.match(/(^-{3}\n)(.+?)(\n-{3})/m)[2]
     
-    if options[:production]
+    if options[:env] == 'production'
       future = Time.now < Time.parse(data['date'].to_s) ? "future date: #{data['date']}" : false
     end
     draft = data['published'] == false ? 'published: false' : false

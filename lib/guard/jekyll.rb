@@ -19,14 +19,14 @@ module Guard
     def run_all
       if Watcher.match_files(self, Dir.glob('{,**/}*{,.*}').uniq).size > 0
         Octopress::Configuration.write_configs_for_generation
-        system "jekyll"
+        system "jekyll#{' --no-future' if Octopress.env == 'production'}"
         Octopress::Configuration.remove_configs_for_generation
       end
     end
     
     def run_on_changes(_)
       Octopress::Configuration.write_configs_for_generation
-      system "jekyll"
+      system "jekyll#{' --no-future' if Octopress.env == 'production'}"
       Octopress::Configuration.remove_configs_for_generation
     end
   end

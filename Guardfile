@@ -28,7 +28,7 @@ guard :shell do
       path = m.first.sub /^#{config[:source]}/, "#{config[:destination]}"
       FileUtils.mkdir_p path.sub /#{file}/,''
       FileUtils.cp m.first, path
-      "\nCopied #{m.first} to #{path}"
+      "Copied #{m.first} -> #{path}"
     end
   end
   watch /^#{javascripts_dir}\/.+\.(js|coffee|mustache|eco|tmpl)/ do |change|

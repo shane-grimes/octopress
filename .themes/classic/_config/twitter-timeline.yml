@@ -4,8 +4,9 @@
 # -------------------------------- #
 
 twitter:
+  user:
+
   timeline:
-    user:
     tweet-count: 4
     show-replies: false
     show-rts: false
