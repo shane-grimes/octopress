@@ -4,10 +4,10 @@ require "stringex"
 
 ## -- Rsync Deploy config -- ##
 # Be sure your public key is listed in your server's ~/.ssh/authorized_keys file
-ssh_user       = "user@domain.com"
-ssh_port       = "22"
-document_root  = "~/website.com/"
-rsync_delete   = false
+ssh_user       = ENV['OCTOPRESS_USER']
+ssh_port       = ENV['OCTOPRESS_PORT']
+document_root  = "~/blog.alertrr.com/"
+rsync_delete   = true
 rsync_args     = ""  # Any extra arguments to pass to rsync
 deploy_default = "rsync"
 
