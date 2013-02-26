@@ -2,28 +2,6 @@
 // To give it a try, uncomment some of the lines below rebuild your blog, and see how it works.
 // If you need a handy color picker try http://hslpicker.com
 
-$page-bg: #FFFFFF;
-$main-bg: #FFFFFF;
-$title-color: #000000;
-$header-title-font-family: "Raleway", sans-serif;
-$header-subtitle-title-font-family: "Raleway", sans-serif;
-$heading-font-family: "Raleway", sans-serif;
-
-$header-bg: #FFFFFF;
-$subtitle-color: darken($header-bg, 58);
-$nav-bg: #FFF;
-$nav-bg-front: image-url('noise.png');
-$nav-bg-back: #FFF;
-$nav-color: darken($nav-bg, 78);
-$nav-color-hover: darken($nav-color, 25);
-$nav-border-bottom: #fff;
-$sidebar-bg: desaturate(#eceff5, 8);
-$sidebar-link-color: saturate(#526f9a, 10);
-$sidebar-link-color-hover: darken(#7ab662, 9);
-$footer-bg: #FFFFFF;
-$footer-bg-front: image-url('noise.png');
-$footer-bg-back: linear-gradient(lighten($footer-bg, 8), $footer-bg, darken($footer-bg, 11));
-
 //$header-bg: #263347;
 //$subtitle-color: lighten($header-bg, 58);
 //$nav-bg: desaturate(lighten(#8fc17a, 18), 5);
